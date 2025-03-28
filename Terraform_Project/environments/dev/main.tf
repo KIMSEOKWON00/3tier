@@ -19,28 +19,29 @@ module "network" {
   ]
 }
 
-module "rds" {
-  source = "../../modules/rds"
+# 비용이 많이 나와서 테스트 구동 시 사용하지 않음
+# module "rds" {
+#   source = "../../modules/rds"
 
-  db_subnet_ids         = module.network.private_db_subnet_ids  # 네트워크 모듈의 출력값 사용
-  username              = "testuser"        # 실제 사용자명으로 변경
-  password              = "password"        # 실제 비밀번호로 변경
-  vpc_security_group_ids = [module.security_groups.rds_sg_id]  # RDS 전용 보안 그룹 ID
+#   db_subnet_ids         = module.network.private_db_subnet_ids  # 네트워크 모듈의 출력값 사용
+#   username              = "testuser"        # 실제 사용자명으로 변경
+#   password              = "password"        # 실제 비밀번호로 변경
+#   vpc_security_group_ids = [module.security_groups.rds_sg_id]  # RDS 전용 보안 그룹 ID
 
-  # 옵션으로 다른 값들도 변경할 수 있음
-  allocated_storage  = 20
-  storage_type       = "gp2"
-  engine             = "mysql"
-  engine_version     = "8.0"
-  instance_class     = "db.t3.micro"
-  multi_az           = true
-  publicly_accessible = false
-  skip_final_snapshot = true
+#   # 옵션으로 다른 값들도 변경할 수 있음
+#   allocated_storage  = 20
+#   storage_type       = "gp2"
+#   engine             = "mysql"
+#   engine_version     = "8.0"
+#   instance_class     = "db.t3.micro"
+#   multi_az           = true
+#   publicly_accessible = false
+#   skip_final_snapshot = true
 
-  tags = {
-    Name = "Multi-AZ RDS Instance"
-  }
-}
+#   tags = {
+#     Name = "Multi-AZ RDS Instance"
+#   }
+# }
 
 
 module "s3_static_site" {
