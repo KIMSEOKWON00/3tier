@@ -124,7 +124,7 @@ jobs:
       run: |
         cd ./Terraform_Project/environments/dev
         terraform init -reconfigure
-        terraform force-unlock 9cb21c38-3ffe-50ed-431a-0a7815ebadda || true
+        terraform force-unlock -force 9cb21c38-3ffe-50ed-431a-0a7815ebadda || true
 
 
 
