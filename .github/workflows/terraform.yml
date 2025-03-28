@@ -145,7 +145,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          cd ./Terraform_Project/environments/dev; terraform init \
+          cd ./Terraform_Project/environments/dev && terraform init \
             -backend-config="region=ap-northeast-2" \
             -backend-config="bucket=evan-terraformstate" \
             -backend-config="key=./terraform.tfstate"
@@ -172,7 +172,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          cd ./Terraform_Project/environments/dev init \
+          cd ./Terraform_Project/environments/dev && terraform init \
             -backend-config="region=ap-northeast-2" \
             -backend-config="bucket=evan-terraformstate" \
             -backend-config="key=./terraform.tfstate"
