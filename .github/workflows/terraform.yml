@@ -9,11 +9,7 @@ on:
     branches:
       - 'main'
     paths-ignore:
-      - '**/terraform.yml'
-      - '**/ci-cd.yml'
-      - 'src/**'
-      - '**/appspec.yml'
-      - '**/deploy.sh'
+
   workflow_dispatch:
     inputs:
       confirm_destroy:
@@ -122,6 +118,13 @@ jobs:
             terraform plan
             terraform apply -auto-approve
         fi
+    
+    # 상태저장 언락 강제 해제
+    - name: Force Unlock Terraform State
+      run: |
+        cd ./Terraform_Project/environments/dev
+        terraform force-unlock 9cb21c38-3ffe-50ed-431a-0a7815ebadda || true
+
 
     # Generates an execution plan for Terraform
     - name: Terraform Plan

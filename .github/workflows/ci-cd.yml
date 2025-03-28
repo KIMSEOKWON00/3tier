@@ -2,14 +2,11 @@ name: CI/CD Pipeline
 
 # dev 브랜치에 푸시가 발생하면 워크플로우가 실행됩니다.
 on:
-  push:
-    branches: [ main ]
-    paths-ignore:
-      - '**/terraform.yml'
-      # - '**/ci-cd.yml'
-      - '**/appspec.yml'
-      - '**/deploy.sh'
-      - 'Terraform_Project/**'
+  workflow_run:
+    workflows: ["Terraform-dev"]  # terraform.yml 워크플로우 파일 내의 name 값과 일치해야 합니다.
+    types:
+      - completed
+
 jobs:
   build-deploy:
     runs-on: ubuntu-latest  # Ubuntu 최신 환경에서 작업을 실행합니다.
@@ -20,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
 
       # React 애플리케이션 빌드를 위해 Docker 이미지 생성 (src/frontend 폴더 내 Dockerfile 사용)
-      - name: Build Docker image for React Appp
+      - name: Build Docker image for React App
         working-directory: ./src/frontend  # 작업 디렉토리를 src/frontend로 설정
         run: |
           docker build -t my-react-app:latest .
