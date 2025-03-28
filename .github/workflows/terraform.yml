@@ -147,7 +147,7 @@ jobs:
         run: |
           cd ./Terraform_Project/environments/dev; terraform init \
             -backend-config="region=ap-northeast-2" \
-            -backend-config="bucket=evanterraformstate" \
+            -backend-config="bucket=evan-terraformstate" \
             -backend-config="key=./terraform.tfstate"
 
   backend_destroy:
