@@ -120,10 +120,12 @@ jobs:
         fi
     
     # 상태저장 언락 강제 해제
-    - name: Force Unlock Terraform State
+    - name: Init Backend and Force Unlock Terraform State
       run: |
         cd ./Terraform_Project/environments/dev
+        terraform init -reconfigure
         terraform force-unlock 9cb21c38-3ffe-50ed-431a-0a7815ebadda || true
+
 
 
     # Generates an execution plan for Terraform
