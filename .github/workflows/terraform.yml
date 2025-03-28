@@ -9,7 +9,11 @@ on:
     branches:
       - 'main'
     paths-ignore:
-  
+      - '**/terraform.yml'
+      - '**/ci-cd.yml'
+      - 'src/**'
+      - '**/appspec.yml'
+      - '**/deploy.sh'
   workflow_dispatch:
     inputs:
       confirm_destroy:
