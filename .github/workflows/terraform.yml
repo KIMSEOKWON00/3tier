@@ -4,12 +4,12 @@ name: 'Terraform-dev'
 on:
   push:
     branches:
-      - 'dev'
+      - 'main'
   pull_request:
     branches:
       - 'main'
     paths-ignore:
-      - 'src/**'
+  
   workflow_dispatch:
     inputs:
       confirm_destroy:
@@ -24,7 +24,7 @@ jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
-    environment: stage
+    environment: main
 
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:

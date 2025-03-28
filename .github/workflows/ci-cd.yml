@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 # dev 브랜치에 푸시가 발생하면 워크플로우가 실행됩니다.
 on:
   push:
-    branches: [ dev ]
+    branches: [ main ]
     paths-ignore:
       - '**/terraform.yml'
       - '**/ci-cd.yml'
