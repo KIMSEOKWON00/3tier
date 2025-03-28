@@ -1,6 +1,6 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline - Frontend Deployment
 
-# dev 브랜치에 푸시가 발생하면 워크플로우가 실행됩니다.
+# terraform 워크플로우가 실행된 후 실행
 on:
   workflow_run:
     workflows: ["Terraform-dev"]  # terraform.yml 워크플로우 파일 내의 name 값과 일치해야 합니다.
@@ -8,82 +8,45 @@ on:
       - completed
 
 jobs:
-  build-deploy:
-    runs-on: ubuntu-latest  # Ubuntu 최신 환경에서 작업을 실행합니다.
+  build-deploy-frontend:
+    runs-on: ubuntu-latest
 
     steps:
       # 소스 코드를 체크아웃합니다.
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # React 애플리케이션 빌드를 위해 Docker 이미지 생성 (src/frontend 폴더 내 Dockerfile 사용)
-      - name: Build Docker image for React App
-        working-directory: ./src/frontend  # 작업 디렉토리를 src/frontend로 설정
+      # Node.js 환경을 설정합니다.
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      # 프론트엔드 의존성 설치 (src/frontend 폴더 내 package.json 사용)
+      - name: Install dependencies
+        working-directory: ./src/frontend
+        run: npm install
+
+      # React 애플리케이션 빌드 (빌드 결과는 기본적으로 ./build 폴더에 생성)
+      - name: Build React App
+        working-directory: ./src/frontend
+        run: npm run build
+
+      # 빌드된 정적 파일들을 S3 버킷에 업로드합니다.
+      - name: Deploy to S3
         run: |
-          docker build -t my-react-app:latest .
-
-      # AWS ECR에 로그인하여 이후 Docker 이미지 푸시를 위한 인증을 수행합니다.
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        env:
-          AWS_REGION: ap-northeast-2
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-
-      # 빌드된 Docker 이미지를 태깅하고, ECR 리포지토리에 푸시합니다.
-      - name: Tag and Push Docker image
-        env:
-          ECR_REPOSITORY: my-react-app-repo  # ECR 리포지토리 이름 (GitHub Secrets 또는 직접 설정)
-          AWS_REGION: ap-northeast-2         # AWS 리전 설정 (서울)
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: |
-          # AWS CLI를 이용해 ECR 리포지토리의 URI를 조회합니다.
-          IMAGE_URI=$(aws ecr describe-repositories --repository-names $ECR_REPOSITORY --region $AWS_REGION --query 'repositories[0].repositoryUri' --output text)
-          echo "Image URI: $IMAGE_URI"
-          # 로컬에서 빌드된 Docker 이미지를 ECR 이미지 URI를 기준으로 태깅합니다.
-          docker tag my-react-app:latest $IMAGE_URI:latest
-          # 태깅된 이미지를 ECR에 푸시합니다.
-          docker push $IMAGE_URI:latest
-          # 이후 배포에 사용할 수 있도록 IMAGE_URI 값을 출력으로 설정합니다.
-          echo "::set-output name=image_uri::$IMAGE_URI"
-
-      # CodeDeploy에 사용할 배포 패키지를 생성합니다.
-      # 배포 패키지에는 appspec.yml과 deploy.sh 파일이 포함됩니다.
-      - name: Create deployment package
-        run: |
-          mkdir -p deployment   # 배포 폴더 생성
-          chmod +x deploy.sh    # deploy.sh 파일에 실행 권한 부여
-          cp appspec.yml deployment/  # appspec.yml 파일 복사
-          cp deploy.sh deployment/    # deploy.sh 파일 복사 (실행 권한 필요)
-          zip -r deployment-package.zip deployment  # 배포 폴더를 압축하여 배포 패키지 생성
-
-      - name: List files in workspace
-        run: ls -la
-
-      # S3 버킷으로 배포 패키지를 업로드합니다.
-      - name: Upload deployment package to S3 using cp
-        run: |
-          aws s3 cp ./deployment-package.zip s3://${{ secrets.AWS_S3_BUCKET }}/deployment-package.zip --acl private
+          aws s3 sync ./src/frontend/build s3://${{ secrets.AWS_S3_BUCKET }} --delete
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "ap-northeast-2"
-         
 
-      # (옵션) AWS CLI를 사용해 CodeDeploy 배포를 트리거합니다.
-      - name: Trigger CodeDeploy deployment
+      # CloudFront 배포의 캐시를 무효화하여 최신 컨텐츠가 반영되도록 합니다.
+      # secrets.CLOUDFRONT_DISTRIBUTION_ID는 aws 콘솔에서 찾아서 시크릿키의 직접 입력해야 함... 추후 자동화
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "ap-northeast-2"
-        run: |
-          # aws deploy create-deployment 명령을 사용하여 CodeDeploy 배포를 시작합니다.
-          DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name my-codedeploy-app \
-            --deployment-group-name my-deployment-group \
-            --s3-location bucket=${{ secrets.AWS_S3_BUCKET }},bundleType=zip,key=deployment-package.zip \
-            --query "deploymentId" --output text)
-          echo "Deployment ID: $DEPLOYMENT_ID"

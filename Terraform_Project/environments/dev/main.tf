@@ -19,7 +19,7 @@ module "network" {
   ]
 }
 
-# 비용이 많이 나와서 테스트 구동 시 사용하지 않음
+# 비용이 많이 나와서(시간도 오래 걸림) 테스트 구동 시 사용하지 않음
 # module "rds" {
 #   source = "../../modules/rds"
 
